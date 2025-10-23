@@ -2,7 +2,7 @@ import { response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js"
 import { User} from "../models/user.model.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {deleteFromCloudinary, uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 
@@ -52,24 +52,39 @@ const registerUser = asyncHandler( async (req, res) => {
         coverImageLocalPath = req.files.coverImage[0].path
     }
 
+    let coverImage;
+
+    if(coverImageLocalPath){
+        const coverResponse = await uploadOnCloudinary(coverImageLocalPath)
+        coverImage = {
+            id: coverResponse.public_id,
+            url: coverResponse.secure_url
+        }
+    }
+
     if( !avatarPath ) {
         console.log(avatarPath)
         throw new ApiError(400, "Avatar file is required")
         
     }
 
-    const avatar = await uploadOnCloudinary(avatarPath)
+    const response = await uploadOnCloudinary(avatarPath)
 
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
-    if( !avatar ) {
+    if( !response ) {
         throw new ApiError(400, "Failed to upload avatar") 
     }
 
+    const avatar = {
+        id: response.public_id,
+        url: response.secure_url
+    }
+
+    console.log(coverImage)
+    
     const user = await User.create({
         fullname,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        avatar: avatar,
+        coverImage: coverImage ? coverImage : undefined,
         email,
         password,
         username: username.toLowerCase()
@@ -220,13 +235,17 @@ const changeCurrentPassword = asyncHandler(async(req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Passowrd changed Successfully"))
+    .json(
+        new ApiResponse(200, {}, "Password changed Successfully")
+    )
 })
 
 const getCurrentUser = asyncHandler(async(req, res) => {
     return res
     .status(200)
-    .json(200, req.user, "Current user fetched successfully")
+    .json.json(
+        new ApiResponse(200, req.user, "Current user fetched successfully")
+    )
 })
 
 const updateAccountDetails = asyncHandler(async(req, res) => {
@@ -236,7 +255,7 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
         throw new ApiError(400, "All fields are required")
     }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -259,21 +278,31 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Avatar file is missing")
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    const response = await uploadOnCloudinary(avatarLocalPath)
 
-    if(!avatar.url) {
+    console.log(response)
+
+    if(!response.url) {
         throw new ApiError(400, "Error while uploading updating avatar")
+    }
+    
+    const avatar = {
+        id : response.public_id,
+        url : response.secure_url
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                avatar: avatar.url
+                avatar: avatar
             }
         },
         {new: true}
     ).select("-password")
+
+    await deleteFromCloudinary(req.user.avatar.id)
+
 
     return res
     .status(200)
@@ -289,19 +318,26 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Cover Image is missing")
     }
 
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-    if(!coverImage.url) {
+    const response = await uploadOnCloudinary(coverImageLocalPath)
+    if(!response) {
         throw new ApiError(400, "Error while uploading Cover Image")
+    }
+
+    const coverImage = {
+        id: response.public_id,
+        url: response.secure_url
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url
+                coverImage: coverImage
             }
         },{new: true}
     ).select("-password")
+
+    await deleteFromCloudinary(req.user.coverImage.id)
 
     return res
     .status(200)
