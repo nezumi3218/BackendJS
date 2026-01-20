@@ -14,7 +14,7 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-
+import { uploadPost } from "../controllers/post.controller.js";
 const router = Router();
 
 router.route("/register").post(
@@ -49,4 +49,15 @@ router
   .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
 router.route("/history").get(verifyJWT, getWatchHistory);
+
+router.route("/post").post(
+  upload.fields([
+    {
+      name: "postImage",
+      maxCount: 1,
+    },
+  ]),
+  uploadPost
+);
+
 export default router;

@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const postImageSchema = new Schema(
   {
-    _id: {
+    id: {
       type: String,
       required: true,
     },

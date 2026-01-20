@@ -33,10 +33,16 @@ const uploadPost = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Failed to upload post on cloudinary");
   }
 
+  // console.log("Upload responsee =>", uploadResponse);
+
   const postImage = {
-    id: response.public_id,
-    url: response.secure_url,
+    id: uploadResponse.public_id,
+    url: uploadResponse.secure_url,
   };
+
+  if (!postImage) {
+    throw new ApiError(400, "Failed to upload post");
+  }
 
   const post = await Post.create({
     postImage: postImage,
