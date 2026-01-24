@@ -29,6 +29,11 @@ const postSchema = new Schema(
     comments: {
       type: Number,
     },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      // required: true,
+    },
   },
   {
     timestamps: true,

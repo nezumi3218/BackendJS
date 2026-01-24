@@ -11,6 +11,7 @@ import { response } from "express";
 
 const uploadPost = asyncHandler(async (req, res) => {
   const { caption } = req.body;
+  console.log(req.user._id);
 
   // let postLocalPath;
   // if(
@@ -48,7 +49,8 @@ const uploadPost = asyncHandler(async (req, res) => {
     postImage: postImage,
     caption,
     likes: 0,
-    comment: 0,
+    comments: 0,
+    owner: req.user,
   });
 
   if (!post) {
@@ -59,5 +61,12 @@ const uploadPost = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, post, "Successfully Posted!"));
 });
+
+// const getAllPosts = asyncHandler(async (req, res) => {
+//   return res.status(200).json.json(new ApiResponse(200));
+//   const user = await User.findOne({
+//     $or: [{ username }, { email }],
+//   });
+// });
 
 export { uploadPost };
