@@ -1,4 +1,8 @@
-import { uploadPost } from "../controllers/post.controller.js";
+import {
+  getFeedPosts,
+  getUserPost,
+  uploadPost,
+} from "../controllers/post.controller.js";
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
 import { likePost } from "../controllers/like.controller.js";
@@ -18,5 +22,8 @@ router.route("/post").post(
   uploadPost
 );
 // router.route("/like").post(likePost);
+
+router.route("/user-posts").get(verifyJWT, getUserPost);
+router.route("/feed-posts").get(verifyJWT, getFeedPosts);
 
 export default router;

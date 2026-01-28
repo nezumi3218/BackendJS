@@ -62,11 +62,51 @@ const uploadPost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, post, "Successfully Posted!"));
 });
 
-// const getAllPosts = asyncHandler(async (req, res) => {
-//   return res.status(200).json.json(new ApiResponse(200));
-//   const user = await User.findOne({
-//     $or: [{ username }, { email }],
-//   });
-// });
+const getFeedPosts = asyncHandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-export { uploadPost };
+    const skip = (page - 1) * limit;
+
+    const posts = await Post.find()
+      .populate({
+        path: "owner",
+        select: "username fullname avatar",
+      })
+      .sort({ createdAt: -1 }) // newest first
+      .skip(skip)
+      .limit(limit);
+
+    const totalPosts = await Post.countDocuments();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          success: true,
+          page,
+          totalPages: Math.ceil(totalPosts / limit),
+          totalPosts,
+          posts,
+        },
+        "All posts fetched"
+      )
+    );
+  } catch (error) {
+    console.error("Get Feed Error:", error);
+    throw new ApiError(410, "Failed to load all posts");
+  }
+});
+
+const getUserPost = asyncHandler(async (req, res) => {
+  const posts = await Post.find({ owner: req.user._id })
+    .sort({ createdAt: -1 })
+    .populate("owner", "username fullname avatar");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, posts, "User posts successfully fetched"));
+});
+
+export { uploadPost, getFeedPosts, getUserPost };
