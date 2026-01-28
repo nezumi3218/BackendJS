@@ -1,5 +1,7 @@
 import {
+  deletePost,
   getFeedPosts,
+  getSinglePost,
   getUserPost,
   uploadPost,
 } from "../controllers/post.controller.js";
@@ -25,5 +27,7 @@ router.route("/post").post(
 
 router.route("/user-posts").get(verifyJWT, getUserPost);
 router.route("/feed-posts").get(verifyJWT, getFeedPosts);
+router.route("/:postId").get(getSinglePost);
+router.delete("/:postId", verifyJWT, deletePost);
 
 export default router;

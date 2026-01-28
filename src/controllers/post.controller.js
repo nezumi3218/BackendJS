@@ -109,4 +109,50 @@ const getUserPost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, posts, "User posts successfully fetched"));
 });
 
-export { uploadPost, getFeedPosts, getUserPost };
+const getSinglePost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(postId)) {
+    throw new ApiError(400, "Invalid post id");
+  }
+
+  const post = await Post.findById(postId).populate(
+    "owner",
+    "username fullname avatar"
+  );
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, post, "Post fetched successfully"));
+});
+
+const deletePost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(postId)) {
+    throw new ApiError(400, "Invalid post id");
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  // only owner can delete
+  if (post.owner?.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not allowed to delete this post");
+  }
+
+  await Post.findByIdAndDelete(postId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Post deleted successfully"));
+});
+
+export { uploadPost, getFeedPosts, getUserPost, getSinglePost, deletePost };
