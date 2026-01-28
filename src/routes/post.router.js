@@ -3,6 +3,7 @@ import {
   getFeedPosts,
   getSinglePost,
   getUserPost,
+  likedByUser,
   uploadPost,
 } from "../controllers/post.controller.js";
 import { Router } from "express";
@@ -27,6 +28,7 @@ router.route("/post").post(
 
 router.route("/user-posts").get(verifyJWT, getUserPost);
 router.route("/feed-posts").get(verifyJWT, getFeedPosts);
+router.route("/user-likes").get(verifyJWT, likedByUser);
 router.route("/:postId").get(getSinglePost);
 router.delete("/:postId", verifyJWT, deletePost);
 

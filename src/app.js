@@ -18,8 +18,10 @@ app.use(cookieParser());
 
 import userRouter from "./routes/user.routes.js";
 import postRouter from "./routes/post.router.js";
+import likeRouter from "./routes/like.router.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
+app.use("/api/v1/likes", likeRouter);
 
 export default app;

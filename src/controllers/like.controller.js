@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Like } from "../models/likes.model.js";
 import { Post } from "../models/post.model.js";
+import mongoose from "mongoose";
 
 const toggleLikePost = asyncHandler(async (req, res) => {
   const { postId } = req.params;

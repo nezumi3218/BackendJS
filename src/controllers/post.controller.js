@@ -8,6 +8,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import { Post } from "../models/post.model.js";
 import { response } from "express";
+import { Like } from "../models/likes.model.js";
 
 const uploadPost = asyncHandler(async (req, res) => {
   const { caption } = req.body;
@@ -155,4 +156,24 @@ const deletePost = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Post deleted successfully"));
 });
 
-export { uploadPost, getFeedPosts, getUserPost, getSinglePost, deletePost };
+const likedByUser = asyncHandler(async (req, res) => {
+  const likes = await Like.find({ user: req.user._id })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "post",
+      populate: { path: "owner", select: "username fullname avatar" },
+    });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, likes, "Liked posts successfully fetched"));
+});
+
+export {
+  uploadPost,
+  getFeedPosts,
+  getUserPost,
+  getSinglePost,
+  deletePost,
+  likedByUser,
+};
