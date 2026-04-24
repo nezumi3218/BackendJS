@@ -15,7 +15,7 @@ router.route("/posts/:postId/comments").post(verifyJWT, addComment);
 router.route("/posts/:postId/comment-count").get(getCommentCount);
 
 // get all comments of a post
-(router.route("/posts/:postId/comments"), get(getPostComments));
+router.route("/posts/:postId/comments").get(getPostComments);
 
 // delete comment
 router.delete("/comments/:commentId", verifyJWT, deleteComment);
