@@ -117,10 +117,12 @@ const getSinglePost = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid post id");
   }
 
-  const post = await Post.findById(postId).populate(
-    "owner",
-    "username fullname avatar"
-  );
+  const post = await Post.findById(postId);
+
+  const populatedPost = await Post.populate(post, {
+    path: "owner",
+    select: "username fullname avatar",
+  });
 
   if (!post) {
     throw new ApiError(404, "Post not found");
