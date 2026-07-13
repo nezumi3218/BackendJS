@@ -9,8 +9,6 @@ import {
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
-import { sendEmail } from "../utils/sendEmail.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -91,27 +89,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // console.log(coverImage);
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashedOTP = await bcrypt.hash(otp, 10);
-
-  try {
-    await sendEmail({
-      to: email,
-      subject: "Verify your Lume account",
-      html: `
-      <h2>Welcome to Lume 🎉</h2>
-
-      <p>Your verification code is:</p>
-
-      <h1>${otp}</h1>
-
-      <p>This code expires in 10 minutes.</p>
-  `,
-    });
-  } catch (error) {
-    console.log("Mail error: ", error);
-  }
-
   const user = await User.create({
     fullname,
     avatar: avatar,
@@ -120,8 +97,6 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
     username: username.toLowerCase(),
     isVerified: false,
-    verificationOTP: hashedOTP,
-    verificationOTPExpiry: Date.now() + 10 * 60 * 1000,
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -141,44 +116,6 @@ const registerUser = asyncHandler(async (req, res) => {
         "Registration successful. Please verify your email."
       )
     );
-});
-
-const verifyEmail = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    throw new ApiError(400, "Email and OTP are required");
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  if (user.isVerified) {
-    throw new ApiError(400, "Email is already verified");
-  }
-
-  if (user.verificationOTPExpiry < Date.now()) {
-    throw new ApiError(400, "OTP has expired");
-  }
-
-  const isOTPValid = await bcrypt.compare(otp, user.verificationOTP);
-
-  if (!isOTPValid) {
-    throw new ApiError(400, "Invalid OTP");
-  }
-
-  user.isVerified = true;
-  user.verificationOTP = undefined;
-  user.verificationOTPExpiry = undefined;
-
-  await user.save();
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Email verified successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -556,64 +493,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     );
 });
 
-const resendOTP = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    throw new ApiError(400, "Email is required");
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  if (user.isVerified) {
-    throw new ApiError(400, "Email is already verified");
-  }
-
-  // Generate a new OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const hashedOTP = await bcrypt.hash(otp, 10);
-
-  // Save it
-  user.verificationOTP = hashedOTP;
-  user.verificationOTPExpiry = Date.now() + 10 * 60 * 1000;
-
-  await user.save();
-
-  // Send email
-  try {
-    await sendEmail({
-      to: user.email,
-      subject: "Your new Lume verification code",
-      html: `
-      <div style="font-family: Arial, sans-serif;">
-        <h2>Verify your Lume account ✨</h2>
-
-        <p>Your new verification code is:</p>
-
-        <h1 style="letter-spacing: 5px;">${otp}</h1>
-
-        <p>This OTP is valid for 10 minutes.</p>
-
-        <p>If you didn't request this, you can safely ignore this email.</p>
-      </div>
-    `,
-    });
-  } catch (error) {
-    console.log("OTP error", error);
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "A new OTP has been sent to your email."));
-});
-
 export {
   registerUser,
-  verifyEmail,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -624,5 +505,4 @@ export {
   updateUserCoverImage,
   getUserChannelProfile,
   getWatchHistory,
-  resendOTP,
 };

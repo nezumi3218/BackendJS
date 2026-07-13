@@ -77,13 +77,7 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    verificationOTP: {
-      type: String,
-    },
-
-    verificationOTPExpiry: {
-      type: Date,
-    },
+    
   },
   {
     timestamps: true,
