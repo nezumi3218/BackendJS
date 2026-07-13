@@ -94,10 +94,11 @@ const registerUser = asyncHandler(async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const hashedOTP = await bcrypt.hash(otp, 10);
 
-  await sendEmail({
-    to: email,
-    subject: "Verify your Lume account",
-    html: `
+  try {
+    await sendEmail({
+      to: email,
+      subject: "Verify your Lume account",
+      html: `
       <h2>Welcome to Lume 🎉</h2>
 
       <p>Your verification code is:</p>
@@ -106,7 +107,10 @@ const registerUser = asyncHandler(async (req, res) => {
 
       <p>This code expires in 10 minutes.</p>
   `,
-  });
+    });
+  } catch (error) {
+    console.log("Mail error: ", error);
+  }
 
   const user = await User.create({
     fullname,
@@ -580,10 +584,11 @@ const resendOTP = asyncHandler(async (req, res) => {
   await user.save();
 
   // Send email
-  await sendEmail({
-    to: user.email,
-    subject: "Your new Lume verification code",
-    html: `
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Your new Lume verification code",
+      html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>Verify your Lume account ✨</h2>
 
@@ -596,7 +601,10 @@ const resendOTP = asyncHandler(async (req, res) => {
         <p>If you didn't request this, you can safely ignore this email.</p>
       </div>
     `,
-  });
+    });
+  } catch (error) {
+    console.log("OTP error", error);
+  }
 
   return res
     .status(200)
