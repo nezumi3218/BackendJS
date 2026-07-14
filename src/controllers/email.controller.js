@@ -78,6 +78,8 @@ const verifyEmail = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Email and OTP are required");
   }
 
+  console.log("entered OTP: ", otp);
+
   const user = await User.findOne({ email });
 
   if (!user) {
@@ -89,7 +91,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
   }
 
   const otpData = await OTP.findOne({ email });
-
+  console.log(otpData);
   if (!otpData) {
     throw new ApiError(400, "OTP not found");
   }
